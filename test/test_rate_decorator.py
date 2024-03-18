@@ -1,6 +1,6 @@
 import asyncio
 from asyncio import Event as AsyncEvent, gather
-from atools import rate
+from funktools import rate
 from concurrent.futures import ThreadPoolExecutor
 import pytest
 from threading import Event as SyncEvent
@@ -9,20 +9,20 @@ from unittest.mock import MagicMock, patch
 
 @pytest.fixture
 def time() -> MagicMock:
-    with patch('atools._rate_decorator.time') as time:
+    with patch('funktools._rate_decorator.time') as time:
         time.return_value = 0
         yield time
 
 
 @pytest.fixture
 def async_sleep() -> MagicMock:
-    with patch('atools._rate_decorator.async_sleep') as async_sleep:
+    with patch('funktools._rate_decorator.async_sleep') as async_sleep:
         yield async_sleep
 
 
 @pytest.fixture
 def sync_sleep() -> MagicMock:
-    with patch('atools._rate_decorator.sync_sleep') as sync_sleep:
+    with patch('funktools._rate_decorator.sync_sleep') as sync_sleep:
         yield sync_sleep
 
 
