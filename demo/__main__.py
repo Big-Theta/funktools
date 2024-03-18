@@ -11,10 +11,10 @@ python3 -m demo -h
 
 import logging
 
-import atools
+import funktools
 
 from . import advanced, cli, first_example, memoize, rate
 
 logging.basicConfig(level=logging.CRITICAL, format='%(levelname)s: %(message)s')
 
-atools.CLI(__package__).run()
+funktools.CLI(__package__).run()

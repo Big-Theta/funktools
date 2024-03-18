@@ -3,13 +3,13 @@ import enum
 import logging
 import typing
 
-import atools
+import funktools
 
 logger = logging.getLogger(__name__)
 logger.setLevel('ERROR')
 
 
-@atools.CLI()
+@funktools.CLI()
 def simple_arg(arg: str) -> None:
     """Demo for CLI with an arg.
 
@@ -19,7 +19,7 @@ def simple_arg(arg: str) -> None:
     print(locals())
 
 
-@atools.CLI()
+@funktools.CLI()
 def simple_arg_with_help_text(
     arg: typing.Annotated[str, 'typing.Annotated[<T>, help_text] allows you to give CLI help text for parameter.'],
 ) -> None:
@@ -31,7 +31,7 @@ def simple_arg_with_help_text(
     print(locals())
 
 
-@atools.CLI()
+@funktools.CLI()
 def positional_only_without_defaults(
     foo: typing.Annotated[int, 'A positional-only foo without default. Is positional-only in CLI.'],
     bar: typing.Annotated[str, 'A positional-only bar without default. Is positional-only in CLI.'],
@@ -45,7 +45,7 @@ def positional_only_without_defaults(
     print(locals())
 
 
-@atools.CLI()
+@funktools.CLI()
 def positional_or_keyword_without_defaults(
     foo: typing.Annotated[float, 'A positional-or-keyword foo without default. Is positional-only in CLI.'],
     bar: typing.Annotated[bool, 'A positional-or-keyword bar without default. Is positional-only in CLI.'],
@@ -58,7 +58,7 @@ def positional_or_keyword_without_defaults(
     print(locals())
 
 
-@atools.CLI()
+@funktools.CLI()
 def keyword_only_without_defaults(
     *,
     foo: typing.Annotated[float, 'A keyword-only foo without default. Is keyword-only in CLI.'],
@@ -72,7 +72,7 @@ def keyword_only_without_defaults(
     print(locals())
 
 
-@atools.CLI()
+@funktools.CLI()
 def positional_only_with_defaults(
     foo: typing.Annotated[int, 'A positional-only foo with default. Is positional-only in CLI.'] = 0,
     bar: typing.Annotated[str, 'A positional-only bar with default. Is positional-only in CLI.'] = 'Bye!',
@@ -88,7 +88,7 @@ def positional_only_with_defaults(
     print(locals())
 
 
-@atools.CLI()
+@funktools.CLI()
 def positional_or_keyword_with_defaults(
     foo: typing.Annotated[float, 'A positional-or-keyword foo with default. Is keyword-only in CLI.'] = 0.0,
     bar: typing.Annotated[bool, 'A positional-or-keyword bar with default. Is keyword-only in CLI.'] = False,
@@ -105,7 +105,7 @@ def positional_or_keyword_with_defaults(
     print(locals())
 
 
-@atools.CLI()
+@funktools.CLI()
 def keyword_only_with_defaults(
     *,
     foo: typing.Annotated[float, 'A keyword-only foo with default. Is keyword-only in CLI.'] = 0.0,
@@ -129,7 +129,7 @@ class MetasyntacticEnum(enum.Enum):
     baz = 3
 
 
-@atools.CLI()
+@funktools.CLI()
 def enum(
     arg: typing.Annotated[MetasyntacticEnum, 'An enum. Enter in any of the value name strings in CLI.'],
 ) -> None:
@@ -143,7 +143,7 @@ def enum(
     print(locals())
 
 
-@atools.CLI()
+@funktools.CLI()
 def optional(
     arg: typing.Annotated[typing.Optional[int | str], 'An optional. CLI arg may be any of these types or None.'],
 ) -> None:
@@ -158,7 +158,7 @@ def optional(
     print(f'{arg=!r}')
 
 
-@atools.CLI()
+@funktools.CLI()
 def union_type(
     arg: typing.Annotated[bool | float | int | str | None, 'A union. CLI arg may be any of these types.'],
 ) -> None:
@@ -180,7 +180,7 @@ def union_type(
     print(locals())
 
 
-@atools.CLI()
+@funktools.CLI()
 def literal(
     arg: typing.Annotated[typing.Literal['foo', 'bar', 'baz'], 'A literal. CLI arg may be any of these choices.'],
 ) -> None:
@@ -199,7 +199,7 @@ class CustomType:
     data: bool | float | int | str | None | dict | list | set | tuple
 
 
-@atools.CLI()
+@funktools.CLI()
 def custom_type(
     arg: typing.Annotated[
         CustomType,
@@ -223,7 +223,7 @@ def custom_type(
     print(locals())
 
 
-@atools.CLI()
+@funktools.CLI()
 def var_positional(
     *args: typing.Annotated[int | float, 'A var-positional arg. Is any remaining positional args in CLI.'],
 ) -> None:
@@ -236,7 +236,7 @@ def var_positional(
     print(locals())
 
 
-@atools.CLI()
+@funktools.CLI()
 def var_keyword(
     **kwargs: typing.Annotated[int | float | str, 'A var-keyword arg. Is any remaining flag args in CLI.'],
 ) -> None:
@@ -248,7 +248,7 @@ def var_keyword(
     print(locals())
 
 
-@atools.CLI()
+@funktools.CLI()
 def _hidden_subcommand(foo: int) -> None:
     """Demo for CLI entrypoint where `_hidden_subcommand` does not show as a subcommand in help text.
 
@@ -259,8 +259,8 @@ def _hidden_subcommand(foo: int) -> None:
     print(locals())
 
 
-@atools.CLI()
-def log_level_with_bound_logger(log_level: atools.CLI.Annotated.log_level(logger) = 'NOTSET') -> None:
+@funktools.CLI()
+def log_level_with_bound_logger(log_level: funktools.CLI.Annotated.log_level(logger) = 'NOTSET') -> None:
     """Demo for CLI entrypoint where bound logger has level set to parsed `log_level` value.
 
     Ex:
@@ -278,8 +278,8 @@ def log_level_with_bound_logger(log_level: atools.CLI.Annotated.log_level(logger
     logger.critical('If you can see this log line, your log_level is at least CRITICAL.')
 
 
-@atools.CLI()
-def log_level_with_bound_logger_name(log_level: atools.CLI.Annotated.log_level(__name__) = 'NOTSET') -> None:
+@funktools.CLI()
+def log_level_with_bound_logger_name(log_level: funktools.CLI.Annotated.log_level(__name__) = 'NOTSET') -> None:
     """Demo for CLI entrypoint where logger with bound name has level set to parsed `log_level` value.
 
     Ex:
@@ -297,8 +297,8 @@ def log_level_with_bound_logger_name(log_level: atools.CLI.Annotated.log_level(_
     logging.getLogger(__name__).critical('If you can see this log line, your log_level is at least CRITICAL.')
 
 
-@atools.CLI()
-def quiet_with_bound_logger(quiet: atools.CLI.Annotated.quiet(logger) = logging.DEBUG) -> None:
+@funktools.CLI()
+def quiet_with_bound_logger(quiet: funktools.CLI.Annotated.quiet(logger) = logging.DEBUG) -> None:
     """Demo for CLI entrypoint where bound logger has level set to parsed `quiet` value.
 
     Ex:
@@ -318,8 +318,8 @@ def quiet_with_bound_logger(quiet: atools.CLI.Annotated.quiet(logger) = logging.
     logger.critical('If you can see this log line, your log_level is at least CRITICAL.')
 
 
-@atools.CLI()
-def verbose_with_bound_logger(verbose: atools.CLI.Annotated.verbose(logger) = logging.CRITICAL + 10) -> None:
+@funktools.CLI()
+def verbose_with_bound_logger(verbose: funktools.CLI.Annotated.verbose(logger) = logging.CRITICAL + 10) -> None:
     """Demo for CLI entrypoint where bound logger has level set to parsed `verbose` value.
 
     Ex:
@@ -340,4 +340,4 @@ def verbose_with_bound_logger(verbose: atools.CLI.Annotated.verbose(logger) = lo
 
 
 if __name__ == '__main__':
-    atools.CLI(__name__).run()
+    funktools.CLI(__name__).run()
