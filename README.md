@@ -1,5 +1,5 @@
-[![Coverage Status](https://coveralls.io/repos/github/cevans87/atools/badge.svg?branch=master&kill_cache=1)](https://coveralls.io/github/cevans87/atools?branch=master)
-# atools
+[![Coverage Status](https://coveralls.io/repos/github/cevans87/funktools/badge.svg?branch=master&kill_cache=1)](https://coveralls.io/github/cevans87/funktools?branch=master)
+# funktools
 Python 3.9+ decorators including
 
 - `@memoize` - a function decorator for sync and async functions that memoizes results.
