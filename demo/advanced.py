@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Demos for advanced composition of atools decorators.
+"""Demos for advanced composition of funktools decorators.
 """
 
-import atools
+import funktools
 
 
 # Run with any of the following:
 # - python3 -m demo.advanced entrypoint
 # - python3 -m demo advanced entrypoint
-@atools.CLI()
+@funktools.CLI()
 def entrypoint() -> None:
     print('haha')
 
@@ -19,11 +19,11 @@ def entrypoint() -> None:
 #
 # A few cool things to try:
 # - python3 -m demo advanced burst
-@atools.CLI()
+@funktools.CLI()
 def burst(foo: int) -> None:
     ...
 
 
 # Enables this CLI to be run with `python3 -m demo.advanced`.
 if __name__ == '__main__':
-    atools.CLI(__name__).run()
+    funktools.CLI(__name__).run()

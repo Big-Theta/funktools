@@ -5,7 +5,7 @@ The decorator may be used to simplify generation of a CLI based entirely on deco
 Single-entrypoint example:
 
     - file: foo.py
-        from atools.cli import CLI
+        from funktools.cli import CLI
 
 
         @CLI()  # This will add `.cli` decoration to `entrypoint`.
@@ -24,10 +24,10 @@ Single-entrypoint example:
 Multiple-entrypoint example:
 
     - file: prog/__init__.py
-        import atools
+        import funktools
 
 
-        @atools.CLI(submodules=True)  # This will find entrypoints in submodules named `entrypoint`.
+        @funktools.CLI(submodules=True)  # This will find entrypoints in submodules named `entrypoint`.
         def entrypoint(a: int, /, b: str, c: bool = True, *, d: float, e: tuple = tuple()) -> ...:
             ...
 
@@ -375,25 +375,25 @@ class Decoration[** Params, Return]:
         Ex.
             Given the following registered entrypoints.
 
-                @atools.CLI()  # Automatically registered as f'{__name__}.foo'
+                @funktools.CLI()  # Automatically registered as f'{__name__}.foo'
                 def foo(arg: int) -> ...: ...
 
-                @atools.CLI()  # Automatically registered as f'{__name__}.bar'
+                @funktools.CLI()  # Automatically registered as f'{__name__}.bar'
                 def bar(arg: float) -> ...: ...
 
-                @atools.CLI(f'{__name__}.qux')  # Manually registered as f'{__name__}.qux'
+                @funktools.CLI(f'{__name__}.qux')  # Manually registered as f'{__name__}.qux'
                 async def baz(arg: str) -> ...: ...  # Async entrypoints are also fine.
 
             Entrypoints may be called like so.
 
-                atools.CLI(__name__).run(['foo', '42'])
-                atools.CLI(f'{__name__}.foo').run(['42'])  # Equivalent to previous line.
+                funktools.CLI(__name__).run(['foo', '42'])
+                funktools.CLI(f'{__name__}.foo').run(['42'])  # Equivalent to previous line.
 
-                atools.CLI(__name__).run(['bar', '3.14'])
-                atools.CLI(f'{__name__}.foo').run(['3.14'])  # Equivalent to previous line.
+                funktools.CLI(__name__).run(['bar', '3.14'])
+                funktools.CLI(f'{__name__}.foo').run(['3.14'])  # Equivalent to previous line.
 
-                atools.CLI(__name__).run(['qux', 'Hi!'])
-                atools.CLI(f'{__name__}.qux').run(['Hi!'])  # Equivalent to previous line.
+                funktools.CLI(__name__).run(['qux', 'Hi!'])
+                funktools.CLI(f'{__name__}.qux').run(['Hi!'])  # Equivalent to previous line.
 
         If the entrypoint a couroutinefunction, it will be run via `asyncio.run`.
 

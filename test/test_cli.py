@@ -8,7 +8,7 @@ import typing
 
 import pytest
 
-import atools
+import funktools
 
 
 class FooEnum(enum.Enum):
@@ -67,7 +67,7 @@ args = [*map(lambda _args: Arg(*_args), [
 @pytest.mark.parametrize('arg', args)
 def test_parses_positional_only(arg) -> None:
 
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(foo: arg.t, /) -> dict[str, arg.t]:
         return locals()
 
@@ -77,7 +77,7 @@ def test_parses_positional_only(arg) -> None:
 @pytest.mark.parametrize('arg', args)
 def test_parses_positional_only_with_default(arg) -> None:
 
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(foo: arg.t = arg.default, /) -> dict[str, arg.t]:
         return locals()
 
@@ -88,7 +88,7 @@ def test_parses_positional_only_with_default(arg) -> None:
 @pytest.mark.parametrize('arg', args)
 def test_parses_positional_or_keyword(arg) -> None:
 
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(foo: arg.t) -> dict[str, arg.t]:
         return locals()
 
@@ -100,7 +100,7 @@ def test_parses_positional_or_keyword(arg) -> None:
 @pytest.mark.parametrize('arg', args)
 def test_parses_positional_or_keyword_with_default(arg) -> None:
 
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(foo: arg.t = arg.default) -> dict[str, arg.t]:
         return locals()
 
@@ -111,7 +111,7 @@ def test_parses_positional_or_keyword_with_default(arg) -> None:
 @pytest.mark.parametrize('arg', args)
 def test_parses_keyword_only(arg) -> None:
 
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(*, foo: arg.t) -> dict[str, arg.t]:
         return locals()
 
@@ -123,7 +123,7 @@ def test_parses_keyword_only(arg) -> None:
 @pytest.mark.parametrize('arg', args)
 def test_parses_keyword_only_with_default(arg) -> None:
 
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(*, foo: arg.t = arg.default) -> dict[str, arg.t]:
         return locals()
 
@@ -133,7 +133,7 @@ def test_parses_keyword_only_with_default(arg) -> None:
 
 @pytest.mark.parametrize('arg0,arg1', zip(args, [*args[1:], *args[:1]]))
 def test_parses_positional_only_2(arg0, arg1) -> None:
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(foo: arg0.t, bar: arg1.t, /) -> dict[str, arg0.t | arg1.t]:
         return locals()
 
@@ -142,7 +142,7 @@ def test_parses_positional_only_2(arg0, arg1) -> None:
 
 @pytest.mark.parametrize('arg0,arg1', zip(args, [*args[1:], *args[:1]]))
 def test_parses_positional_only_with_default_2(arg0, arg1) -> None:
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(foo: arg0.t = arg0.default, bar: arg1.t = arg1.default, /) -> dict[str, arg0.t | arg1.t]:
         return locals()
 
@@ -153,7 +153,7 @@ def test_parses_positional_only_with_default_2(arg0, arg1) -> None:
 
 @pytest.mark.parametrize('arg0,arg1', zip(args, [*args[1:], *args[:1]]))
 def test_parses_positional_or_keyword_2(arg0, arg1) -> None:
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(foo: arg0.t, bar: arg1.t) -> dict[str, arg0.t | arg1.t]:
         return locals()
 
@@ -162,7 +162,7 @@ def test_parses_positional_or_keyword_2(arg0, arg1) -> None:
 
 @pytest.mark.parametrize('arg0,arg1', zip(args, [*args[1:], *args[:1]]))
 def test_parses_positional_or_keyword_with_default_2(arg0, arg1) -> None:
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(foo: arg0.t = arg0.default, bar: arg1.t = arg1.default) -> dict[str, arg0.t | arg1.t]:
         return locals()
 
@@ -176,7 +176,7 @@ def test_parses_positional_or_keyword_with_default_2(arg0, arg1) -> None:
 @pytest.mark.parametrize('arg0,arg1', zip(args, [*args[1:], *args[:1]]))
 def test_parses_keyword_only_2(arg0, arg1) -> None:
 
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(*, foo: arg0.t, bar: arg1.t) -> dict[str, arg0.t | arg1.t]:
         return locals()
 
@@ -188,7 +188,7 @@ def test_parses_keyword_only_2(arg0, arg1) -> None:
 @pytest.mark.parametrize('arg0,arg1', zip(args, [*args[1:], *args[:1]]))
 def test_parses_keyword_only_with_default_2(arg0, arg1) -> None:
 
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(*, foo: arg0.t = arg0.default, bar: arg1.t = arg1.default) -> dict[str, arg0.t | arg1.t]:
         return locals()
 
@@ -223,27 +223,27 @@ def test_parses_keyword_only_with_default_2(arg0, arg1) -> None:
     ]])
 def test_bad_arg_does_not_parse(arg: Arg) -> None:
 
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(foo: arg.t) -> ...: ...
 
-    with pytest.raises(atools.CLI.Exception):
+    with pytest.raises(funktools.CLI.Exception):
         entrypoint.cli.run(shlex.split(arg.arg))
 
 
 def test_execute_hidden_subcommand_works() -> None:
     prefix = test_execute_hidden_subcommand_works.__name__
 
-    @atools.CLI(prefix, '_foo')
+    @funktools.CLI(prefix, '_foo')
     def _foo(foo: str) -> dict[str, str]:
         return locals()
 
-    assert '_foo' not in atools.CLI(prefix).parser.format_help()
-    assert atools.CLI(prefix).run(shlex.split('_foo hidden_subcommand_works')) == {'foo': 'hidden_subcommand_works'}
+    assert '_foo' not in funktools.CLI(prefix).parser.format_help()
+    assert funktools.CLI(prefix).run(shlex.split('_foo hidden_subcommand_works')) == {'foo': 'hidden_subcommand_works'}
 
 
 def test_async_entrypoint_works() -> None:
 
-    @atools.CLI()
+    @funktools.CLI()
     async def entrypoint(foo: int) -> dict[str, int]:
         return locals()
 
@@ -251,14 +251,14 @@ def test_async_entrypoint_works() -> None:
 
 
 def test_dash_help_prints_parameter_annotation() -> None:
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(foo: typing.Annotated[int, 'This is my comment.']) -> ...: ...
 
     assert 'This is my comment.' in entrypoint.cli.parser.format_help()
 
 
 def test_positional_only_without_default_works() -> None:
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(
         foo: typing.Annotated[int, 'Help text for foo.'],
         /,
@@ -271,7 +271,7 @@ def test_positional_only_without_default_works() -> None:
 
 
 def test_dash_help_prints_entrypoint_doc() -> None:
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(foo: int) -> ...:
         """What's up, Doc?"""
 
@@ -281,10 +281,10 @@ def test_dash_help_prints_entrypoint_doc() -> None:
 def test_annotation_log_level_of_logger_sets_choices() -> None:
     logger = logging.getLogger('test_annotated_of_logger_sets_choices')
 
-    @atools.CLI()
-    def entrypoint(foo: atools.CLI.Annotated.log_level(logger) = 'DEBUG') -> ...: ...
+    @funktools.CLI()
+    def entrypoint(foo: funktools.CLI.Annotated.log_level(logger) = 'DEBUG') -> ...: ...
 
-    for choice in typing.get_args(atools.CLI.Annotated.LogLevelStr):
+    for choice in typing.get_args(funktools.CLI.Annotated.LogLevelStr):
         assert choice in entrypoint.cli.parser.format_help()
 
 
@@ -292,10 +292,10 @@ def test_annotation_log_level_of_logger_sets_log_level() -> None:
     logger = logging.getLogger('test_annotation_log_level_of_logger_sets_log_level')
     logger.setLevel(logging.NOTSET)
 
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(
-        log_level: atools.CLI.Annotated.log_level(logger) = 'NOTSET',
-    ) -> dict[str, atools.CLI.Annotated.LogLevel]:
+        log_level: funktools.CLI.Annotated.log_level(logger) = 'NOTSET',
+    ) -> dict[str, funktools.CLI.Annotated.LogLevel]:
         return locals()
 
     assert logger.level == logging.NOTSET
@@ -314,10 +314,10 @@ def test_annotation_log_level_of_name_sets_log_level() -> None:
     logger = logging.getLogger('test_annotation_log_level_of_name_sets_log_level')
     logger.setLevel(logging.NOTSET)
 
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(
-        log_level: atools.CLI.Annotated.log_level('test_annotation_log_level_of_name_sets_log_level') = 'NOTSET',
-    ) -> dict[str, atools.CLI.Annotated.LogLevel]:
+        log_level: funktools.CLI.Annotated.log_level('test_annotation_log_level_of_name_sets_log_level') = 'NOTSET',
+    ) -> dict[str, funktools.CLI.Annotated.LogLevel]:
         return locals()
 
     assert logger.level == logging.NOTSET
@@ -336,10 +336,10 @@ def test_annotation_verbose_sets_log_level() -> None:
     logger = logging.getLogger('test_annotation_verbose_sets_log_level')
     logger.setLevel(logging.NOTSET)
 
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(
-        verbose: atools.CLI.Annotated.verbose(logger) = logging.CRITICAL + 10,
-    ) -> dict[str, atools.CLI.Annotated.LogLevel]:
+        verbose: funktools.CLI.Annotated.verbose(logger) = logging.CRITICAL + 10,
+    ) -> dict[str, funktools.CLI.Annotated.LogLevel]:
         return locals()
 
     assert logger.level == logging.NOTSET
@@ -350,12 +350,12 @@ def test_annotation_verbose_sets_log_level() -> None:
 
 
 def test_annotation_with_count_action_counts() -> None:
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(
         foo: typing.Annotated[
             int,
             annotated_types.Ge(0),
-            atools.CLI.AddArgument[int](name_or_flags=['-f', '--foo'], action='count'),
+            funktools.CLI.AddArgument[int](name_or_flags=['-f', '--foo'], action='count'),
         ] = 0,
     ) -> dict[str, int]:
         return locals()
@@ -369,7 +369,7 @@ def test_annotation_with_count_action_counts() -> None:
 
 def test_enum_help_text_shows_choices() -> None:
 
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(foo: FooEnum) -> dict[str, FooEnum]: ...
 
     assert '(\'a\', \'b\', \'c\')' in entrypoint.cli.parser.format_help()
@@ -377,7 +377,7 @@ def test_enum_help_text_shows_choices() -> None:
 
 def test_literal_help_text_shows_choices() -> None:
 
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(foo: typing.Literal[1, 2, 3]) -> dict[str, typing.Literal[1, 2, 3]]: ...
 
     assert '(\'1\', \'2\', \'3\')' in entrypoint.cli.parser.format_help()
@@ -385,7 +385,7 @@ def test_literal_help_text_shows_choices() -> None:
 
 def test_help_shows_type_annotation() -> None:
 
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(foo: dict[str, int]) -> ...: ...
 
     assert str(dict[str, int]) in entrypoint.cli.parser.format_help()
@@ -393,22 +393,22 @@ def test_help_shows_type_annotation() -> None:
 
 def test_enum_enforces_choices() -> None:
 
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(foo: FooEnum) -> dict[str, FooEnum]:
         return locals()
 
-    with pytest.raises(atools.CLI.Exception):
+    with pytest.raises(funktools.CLI.Exception):
         entrypoint.cli.run('d')
     assert entrypoint.cli.run('a') == {'foo': FooEnum.a}
 
 
 def test_literal_enforces_choices() -> None:
 
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(foo: typing.Literal[1, 2, 3]) -> dict[str, typing.Literal[1, 2, 3]]:
         return locals()
 
-    with pytest.raises(atools.CLI.Exception):
+    with pytest.raises(funktools.CLI.Exception):
         entrypoint.cli.run('0')
     assert entrypoint.cli.run('1') == {'foo': 1}
 
@@ -417,20 +417,20 @@ def test_cli_names_enforce_subcommand_structure() -> None:
     prefix = test_cli_names_enforce_subcommand_structure.__name__
 
     for suffix in ['foo.baz', 'foo.qux', 'bar.quux', 'bar.corge']:
-        @atools.CLI(prefix, suffix)
+        @funktools.CLI(prefix, suffix)
         def entrypoint() -> dict[str, object]: ...
 
-    assert 'baz' in atools.CLI(prefix, 'foo').parser.format_help()
-    assert 'qux' in atools.CLI(prefix, 'foo').parser.format_help()
-    assert 'quux' in atools.CLI(prefix, 'bar').parser.format_help()
-    assert 'corge' in atools.CLI(prefix, 'bar').parser.format_help()
+    assert 'baz' in funktools.CLI(prefix, 'foo').parser.format_help()
+    assert 'qux' in funktools.CLI(prefix, 'foo').parser.format_help()
+    assert 'quux' in funktools.CLI(prefix, 'bar').parser.format_help()
+    assert 'corge' in funktools.CLI(prefix, 'bar').parser.format_help()
 
 
 def test_unresolved_annotation_raises_assertion_error() -> None:
     choices = ['a', 'b', 'c']
 
-    @atools.CLI()
-    def entrypoint(foo: 'typing.Annotated[str, atools.CLI.AddArgument[str](choices=choices)]') -> ...: ...
+    @funktools.CLI()
+    def entrypoint(foo: 'typing.Annotated[str, funktools.CLI.AddArgument[str](choices=choices)]') -> ...: ...
 
     with pytest.raises(AssertionError):
         entrypoint.cli.run(shlex.split('a'))
@@ -440,12 +440,12 @@ def test_unresolved_annotation_raises_assertion_error() -> None:
 
 
 def test_missing_entrypoint_generates_blank_entrypoint() -> None:
-    assert '-h' in atools.CLI(test_missing_entrypoint_generates_blank_entrypoint.__name__).parser.format_help()
+    assert '-h' in funktools.CLI(test_missing_entrypoint_generates_blank_entrypoint.__name__).parser.format_help()
 
 
 def test_var_positional_args_are_parsed() -> None:
 
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(*foo: int) -> dict[str, tuple[int, ...]]:
         return locals()
 
@@ -454,7 +454,7 @@ def test_var_positional_args_are_parsed() -> None:
 
 def test_var_keyword_args_are_parsed() -> None:
 
-    @atools.CLI()
+    @funktools.CLI()
     def entrypoint(**foo: int) -> dict[str, dict[str, int]]:
         return locals()
 
