@@ -7,8 +7,8 @@ Running the example
 -------------------
 
     $ cd funktools/example/templates
-    $ mkdir buld
-    $ cd bulid
+    $ mkdir build
+    $ cd build
     $ cmake ..
     $ cmake --build . --target test-example
 
