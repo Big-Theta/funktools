@@ -22,6 +22,9 @@ def __getattr__(attr: str) -> typing.Callable:
     elif attr == "template":
         from ._template import _template
         return _template()
+    elif attr == "template":
+        from ._template import TemplateException
+        return TemplateException
     else:
         raise AttributeError(f"Module 'funktools' has no attribute '{attr}'")
 
@@ -33,6 +36,7 @@ __all__ = [
     'Register',
     'Throttle',
     'template',
+    'TemplateException',
 ]
 
 def __dir__():
