@@ -54,7 +54,7 @@ PYBIND11_MODULE(example, m) {
 
   auto getFunc = pybind11::module_::import("funktools")
                      .attr("template")
-                     .attr("register_name")("get");
+                     .attr("make")("get");
 
   m.attr("get") = getFunc;
 
@@ -70,7 +70,7 @@ PYBIND11_MODULE(example, m) {
 
   auto getFromArgFunc = pybind11::module_::import("funktools")
                             .attr("template")
-                            .attr("register_name")("get_from_arg");
+                            .attr("make")("get_from_arg");
 
   m.attr("get_from_arg") = getFromArgFunc;
 

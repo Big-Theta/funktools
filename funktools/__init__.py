@@ -22,7 +22,7 @@ def __getattr__(attr: str) -> typing.Callable:
     elif attr == "template":
         from ._template import _template
         return _template()
-    elif attr == "template":
+    elif attr == "TemplateException":
         from ._template import TemplateException
         return TemplateException
     else:
