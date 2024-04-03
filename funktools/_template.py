@@ -1,13 +1,107 @@
 import inspect
 import typing
 
+__all__ = [
+    "TemplateException",
+    "TemplateFunction",
+    "template",
+]
+
 
 class TemplateException(Exception):
     pass
 
 
 class TemplateFunction:
-    pass
+    def __init__(self, name):
+        self.__name__ = name
+        self._types2funcs = {}
+        self._func_arg_infos = []
+        self.__annotations__ = {}
+
+    def __repr__(self):
+        return f"<funktools.TemplateFunction {self.__name__} at 0x{id(self):x}>"
+
+    def __call__(self, *args, **kwargs):
+        for func_arg_info in self._func_arg_infos:
+            if func_arg_info.is_match(*args, **kwargs):
+                return func_arg_info.get_func()(*args, **kwargs)
+
+        if len(args) == 1:
+            types = type(args[0])
+        else:
+            types = tuple([type(arg) for arg in args])
+
+        if func := self._types2funcs.get(types):
+            return func(*args, **kwargs)
+
+        raise TemplateException("Cannot find templated function matching signature")
+
+    def __getitem__(self, types):
+        try:
+            return self._types2funcs[types]
+        except KeyError:
+            raise TemplateException(
+                f"Cannot find templated function with types: {types}"
+            )
+
+    def __setitem__(self, types: typing.Hashable, func: typing.Callable):
+        self._types2funcs[types] = func
+
+        annotations = self.get.__annotations__
+
+        if isinstance(types, tuple):
+            types = tuple[types]
+
+        annotations["key"] = typing.Union[types, annotations.get("key", types)]
+
+        self._append_func_arg_info(func)
+
+    def add(self, func: typing.Callable):
+        func_arg_info = self._append_func_arg_info(func)
+        argspec = func_arg_info.fullargspec()
+
+        annotations = argspec.annotations
+        args_annotated = len(annotations)
+        if "return" in annotations:
+            args_annotated = args_annotated - 1
+
+        types = None
+        if argspec and args_annotated == len(argspec.args):
+            types = tuple([annotations[arg] for arg in argspec.args])
+
+            if len(types) == 1:
+                types = types[0]
+
+            self[types] = func
+
+    def get(self, key) -> typing.Callable:
+        return self[key]
+
+    def _append_func_arg_info(
+        self,
+        func: typing.Callable,
+        fullargspec: inspect.FullArgSpec = None,
+    ):
+        arg_info = _FuncArgInfo(func, fullargspec)
+
+        if annotation_keys := arg_info.annotation_keys():
+            annotations = self.__annotations__
+            former_args = set(annotations.keys())
+
+            for arg in former_args.union(annotation_keys):
+                arg_type = arg_info.annotations().get(arg, None)
+                former_arg_type = annotations.get(
+                    arg, arg_type if not self._func_arg_infos else None
+                )
+
+                if former_arg_type is None and arg_type is None:
+                    annotations[arg] = None
+                else:
+                    annotations[arg] = former_arg_type | arg_type
+
+        self._func_arg_infos.append(arg_info)
+        return arg_info
 
 
 class _FuncArgInfo:
@@ -29,6 +123,10 @@ class _FuncArgInfo:
 
     def get_func(self) -> typing.Callable:
         return self._func
+
+    def annotation_keys(self) -> None | set[str]:
+        if argspec := self.fullargspec():
+            return set(argspec.args).union(argspec.annotations.keys())
 
     def annotations(self) -> dict:
         return self.fullargspec().annotations
@@ -82,7 +180,7 @@ class _FuncArgInfo:
         return True
 
 
-class _template:
+class _Template:
     def __call__(self, func):
         """Add a func to the TemplateFunction.
 
@@ -93,7 +191,7 @@ class _template:
         The function can also be found by matching argument types and names at a
         callsite.
 
-        >>> template = _template() # Use `from funktools import template`
+        >>> template = _Template() # Use `from funktools import template`
         >>> @template
         ... def foo(a: int, b: str):
         ...     return "foo(a: int, b: str)"
@@ -123,12 +221,13 @@ class _template:
             template_func.add(func)
             return template_func
 
-        typed_template_func = self.make(func.__name__)
+        typed_template_func = TemplateFunction(func.__name__)
         typed_template_func.add(func)
         return typed_template_func
 
     def __getitem__(self, types):
         """Adds a function using types as a lookup key."""
+
         def _trampoline(func):
             name = func.__name__
 
@@ -138,115 +237,11 @@ class _template:
                 template_func[types] = func
                 return template_func
 
-            typed_template_func = self.make(func.__name__)
+            typed_template_func = TemplateFunction(func.__name__)
             typed_template_func[types] = func
             return typed_template_func
 
         return _trampoline
 
-    @staticmethod
-    def make(name: str):
-        """Create a TemplateFunction object with type `name`."""
 
-        def __init__(self):
-            self._types2funcs = {}
-            self._func_arg_infos = []
-
-        def __call__(self, *args, **kwargs):
-            for func_arg_info in self._func_arg_infos:
-                if func_arg_info.is_match(*args, **kwargs):
-                    return func_arg_info.get_func()(*args, **kwargs)
-
-            if len(args) == 1:
-                types = type(args[0])
-            else:
-                types = tuple([type(arg) for arg in args])
-
-            if func := self._types2funcs.get(types):
-                return func(*args, **kwargs)
-
-            raise TemplateException("Cannot find templated function matching signature")
-
-        __call__.__annotations__ = {}
-
-        def __getitem__(self, types):
-            try:
-                return self._types2funcs[types]
-            except KeyError:
-                raise TemplateException(
-                    f"Cannot find templated function with types: {types}"
-                )
-
-        __getitem__.__annotations__ = {}
-
-        def __setitem__(self, types: typing.Type | tuple, func: typing.Callable):
-            self._types2funcs[types] = func
-
-            annotations = self.__class__.__getitem__.__annotations__
-
-            if isinstance(types, tuple):
-                types = typing.Tuple[types]
-
-            annotations["types"] = typing.Union[types, annotations.get("types", types)]
-
-            for param, types in inspect.get_annotations(func).items():
-                annotations[param] = typing.Union[types, annotations.get(param, types)]
-
-            annotations["return"] = typing.Callable
-
-            self._append_func_arg_info(func)
-
-        def add(self, func: typing.Callable):
-            func_arg_info = self._append_func_arg_info(func)
-            argspec = func_arg_info.fullargspec()
-
-            annotations = argspec.annotations
-            args_annotated = len(annotations)
-            if "return" in annotations:
-                args_annotated = args_annotated - 1
-
-            types = None
-            if argspec and args_annotated == len(argspec.args):
-                types = tuple([annotations[arg] for arg in argspec.args])
-
-                if len(types) == 1:
-                    types = types[0]
-
-                self[types] = func
-
-        def _append_func_arg_info(
-            self,
-            func: typing.Callable,
-            fullargspec: inspect.FullArgSpec = None,
-        ):
-            arg_info = _FuncArgInfo(func, fullargspec)
-
-            call_annotations = self.__class__.__call__.__annotations__
-            if argspec := arg_info.fullargspec():
-                all_args = (
-                    arg_info.fullargspec().args + arg_info.fullargspec().kwonlyargs
-                )
-                for arg in all_args:
-                    arg_type = arg_info.annotations().get(arg, typing.Any)
-                    call_annotations[arg] = arg_type | call_annotations.get(
-                        arg, arg_type
-                    )
-
-            self._func_arg_infos.append(arg_info)
-            return arg_info
-
-        TemplateFuncMeta = type(name, (type,), {})
-        return TemplateFuncMeta(
-            name,
-            (TemplateFunction,),
-            {
-                "__init__": __init__,
-                "__call__": __call__,
-                "__getitem__": __getitem__,
-                "__setitem__": __setitem__,
-                "__name__": name,
-                "__annotations__": {},
-                "add": add,
-                "_append_func_arg_info": _append_func_arg_info,
-            },
-        )()
+template = _Template()

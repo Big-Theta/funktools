@@ -1,4 +1,4 @@
-from funktools import template
+from funktools import template, TemplateFunction
 
 
 class Foo:
@@ -113,3 +113,28 @@ def test_arg_calls() -> None:
         funky(a=1, b=2.3, c="abc")
         == "funky(1: int, 2.3: float, *, abc: str, (1,): tuple)"
     )
+
+def test_types() -> None:
+    assert isinstance(funky, TemplateFunction)
+    assert type(funk) == type(funky)
+    assert "funk" in str(funk)
+    assert "funky" in str(funky)
+
+def test_call_annotations() -> None:
+    import typing
+    type_hints = typing.get_type_hints(funk)
+    assert type_hints["baz"] == None | Baz
+    assert type_hints["val"] == None | int
+    assert type_hints["fee"] == None | Fee
+
+def test_get_annotations() -> None:
+    import typing
+    key_types = typing.get_type_hints(funk.get)["key"]
+    assert key_types | tuple[int, float] == key_types
+    assert key_types | int == key_types
+    assert key_types | Foo == key_types
+    assert key_types | Bar == key_types
+    assert key_types | Qux == key_types
+    assert key_types | Fee == key_types
+    assert key_types | tuple[Foo, Bar, Baz] == key_types
+
