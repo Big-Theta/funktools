@@ -1,0 +1,20 @@
+try:
+    import example
+except ModuleNotFoundError:
+    raise ModuleNotFoundError("Module example is not on the path; run this using `cmake --build build --target test-example`")
+
+def test_get() -> None:
+    Foo = example.Foo
+    get = example.get
+
+    assert get[int]() == "get<int>"
+    assert get[float]() == "get<double>"
+    assert get[Foo]() == "get<Foo>"
+
+def test_get_from_arg() -> None:
+    Foo = example.Foo
+    get_from_arg = example.get_from_arg
+
+    assert get_from_arg(1) == "get_from_arg<int>"
+    assert get_from_arg(1.0) == "get_from_arg<double>"
+    assert get_from_arg(Foo()) == "get_from_arg<Foo>"
