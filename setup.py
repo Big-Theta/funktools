@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='funktools',
-    version='0.14.3',
+    version='0.0.2',
     packages=find_packages(),
     python_requires='>=3.10',
     url='https://github.com/cevans87/funktools',
