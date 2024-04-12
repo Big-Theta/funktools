@@ -35,12 +35,12 @@ def __getattr__(attr: str) -> typing.Callable:
 
 __all__ = [
     'CLI',
-    'Memoize',
-    'Key',
-    'rate',
-    'Register',
+    'Log',
+    'LRUCache',
+    'Retry',
+    'SQLiteCache',
     'Throttle',
-    'template',
+    'Template',
     'TemplateException',
     'TemplateFunction',
 ]
