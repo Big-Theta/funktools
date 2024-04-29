@@ -1,4 +1,0 @@
-aiosqlite
-pytest
-pytest-asyncio
-pytest-cov
