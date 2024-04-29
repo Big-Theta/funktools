@@ -1,0 +1,45 @@
+[project]
+authors = [
+    {name = "Cameron Evans", email = "c.d.evans87@gmail.com"},
+    {name = "Logan Evans", email = "loganpevans@gmail.com"},
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: System :: Logging",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "annotated-types",
+]
+keywords = [
+    "asyncio",
+    "back pressure",
+    "cache",
+    "memoize",
+    "rate limit",
+    "retry",
+    "throttle",
+]
+license = {text = "MIT License"}
+name = "funktools"
+readme = "README.md"
+requires-python = ">=3.12"
+version = "0.0.2"
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-asyncio", "pytest-cov"]
+
+[project.scripts]
+bitbot = "bitbot.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/Big-Theta/funktools"
+Issues = "https://github.com/Big-Theta/funktools/issues"
+Repository = "https://github.com/Big-Theta/funktools.git"
+
+[tool.setuptools.packages.find]
+include = ['funktools']
