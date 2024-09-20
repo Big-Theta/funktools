@@ -21,7 +21,7 @@ def __getattr__(attr: str) -> typing.Callable:
         from ._throttle import Decorator as Throttle
         return Throttle
     elif attr == "Template":
-        from ._template import Decorator as Template
+        from ._template import Template
         return Template
     elif attr == "TemplateException":
         from ._template import TemplateException
@@ -29,6 +29,9 @@ def __getattr__(attr: str) -> typing.Callable:
     elif attr == "TemplateFunction":
         from ._template import TemplateFunction
         return TemplateFunction
+    elif attr == "TemplatedClass":
+        from ._template import TemplatedClass
+        return TemplatedClass
     else:
         raise AttributeError(f"Module 'funktools' has no attribute '{attr}'")
 
