@@ -1,10 +1,12 @@
 import inspect
 import typing
+import functools
 
 __all__ = [
     "TemplateException",
     "TemplateFunction",
-    "Decorator",
+    "Template",
+    "TemplatedClass",
 ]
 
 
@@ -13,27 +15,101 @@ class TemplateException(Exception):
 
 
 class TemplateFunction:
-    def __init__(self, name):
+    def __init__(
+        self,
+        name: str,
+        annotations: dict,
+        types2funcs: dict[tuple, typing.Callable],
+        func_arg_infos: list["_FuncArgInfo"],
+        instance: typing.Any,
+    ):
         self.__name__ = name
-        self._types2funcs = {}
-        self._func_arg_infos = []
-        self.__annotations__ = {}
+        self.__annotations__ = annotations
+        self._types2funcs = types2funcs
+        self._func_arg_infos = func_arg_infos
+        self._instance = instance
+
+    @staticmethod
+    def new(name):
+        return TemplateFunction(
+            name=name, annotations={}, types2funcs={}, func_arg_infos=[], instance=None
+        )
+
+    def with_instance(self, instance):
+        return TemplateFunction(
+            name=self.__name__,
+            annotations=self.__annotations__,
+            types2funcs=self._types2funcs,
+            func_arg_infos=self._func_arg_infos,
+            instance=instance,
+        )
 
     def __repr__(self):
         return f"<funktools.TemplateFunction {self.__name__} at 0x{id(self):x}>"
 
     def __call__(self, *args, **kwargs):
-        for func_arg_info in self._func_arg_infos:
-            if func_arg_info.is_match(*args, **kwargs):
-                return func_arg_info.get_func()(*args, **kwargs)
+        if self._instance is not None:
+            args = (self._instance,) + args
 
-        if len(args) == 1:
-            types = type(args[0])
-        else:
-            types = tuple([type(arg) for arg in args])
+        val_types = [type(arg) for arg in args]
 
-        if func := self._types2funcs.get(types):
-            return func(*args, **kwargs)
+        # The logic in this loop would be more natural in a
+        # _FuncArgInfo.is_match method, but that has about a 30% overhead on
+        # every call to a templated function.
+        for info in self._func_arg_infos:
+            not_a_match = False
+            argspec = info._fullargspec
+
+            num_matched = 0
+            if defaults := argspec.defaults:
+                num_matched = len(
+                    set(argspec.args[-len(defaults) :]).difference(set(kwargs.keys()))
+                )
+
+            if kwonlydefaults := argspec.kwonlydefaults:
+                num_matched += len(
+                    set(kwonlydefaults.keys()).difference(set(kwargs.keys()))
+                )
+
+            if info._num_args_to_match != len(args) + len(kwargs) + num_matched:
+                continue
+
+            for name in argspec.args[: len(val_types)]:
+                if name in kwargs:
+                    not_a_match = True
+                    break
+            if not_a_match:
+                continue
+
+            for name, val_type, want_type in zip(
+                argspec.args, val_types, info._parg_types
+            ):
+                # _FuncArgInfo instance is the sentinal for "no annotation"
+                if want_type is not info and val_type != want_type:
+                    not_a_match = True
+                    break
+
+                num_matched += 1
+            if not_a_match:
+                continue
+
+            annotations = argspec.annotations
+            legal_arg_names = info._legal_arg_names
+            for name, val in kwargs.items():
+                if (want_type := annotations.get(name, info)) is not info:
+                    if type(val) != want_type:
+                        not_a_match = True
+                        break
+                elif name not in legal_arg_names:
+                    not_a_match = True
+                    break
+
+                num_matched += 1
+            if not_a_match:
+                continue
+
+            if num_matched == info._num_args_to_match:
+                return info._func(*args, **kwargs)
 
         raise TemplateException("Cannot find templated function matching signature")
 
@@ -59,15 +135,10 @@ class TemplateFunction:
 
     def add(self, func: typing.Callable):
         func_arg_info = self._append_func_arg_info(func)
-        argspec = func_arg_info.fullargspec()
+        argspec = func_arg_info._fullargspec
 
         annotations = argspec.annotations
-        args_annotated = len(annotations)
-        if "return" in annotations:
-            args_annotated = args_annotated - 1
-
-        types = None
-        if argspec and args_annotated == len(argspec.args):
+        if argspec and set(argspec.args) == set(annotations.keys()):
             types = tuple([annotations[arg] for arg in argspec.args])
 
             if len(types) == 1:
@@ -113,71 +184,22 @@ class _FuncArgInfo:
         fullargspec: inspect.FullArgSpec = None,
     ):
         self._func = func
+        self._fullargspec = inspect.getfullargspec(self._func)
+        self._legal_arg_names = set(
+            self._fullargspec.args + self._fullargspec.kwonlyargs
+        )
+        self._num_args_to_match = len(self._legal_arg_names)
+        self._parg_types = [
+            self._fullargspec.annotations.get(arg, self)
+            for arg in self._fullargspec.args
+        ]
 
-        try:
-            self._fullargspec = inspect.getfullargspec(self.get_func())
-        except TypeError as ex:
-            self._fullargspec = None
-
-        self._arg2type = None
-
-    def get_func(self) -> typing.Callable:
-        return self._func
-
-    def annotation_keys(self) -> None | set[str]:
-        if argspec := self.fullargspec():
-            return set(argspec.args).union(argspec.annotations.keys())
+    def annotation_keys(self) -> set[str]:
+        argspec = self._fullargspec
+        return set(argspec.args).union(argspec.annotations.keys())
 
     def annotations(self) -> dict:
-        return self.fullargspec().annotations
-
-    def fullargspec(self) -> None | inspect.FullArgSpec:
-        return self._fullargspec
-
-    def is_match(self, *args, **kwargs) -> bool:
-        """Check if this function can handle the provided arguments.
-
-        This checks argument names as well as types provided in annotations.
-        """
-        argspec = self.fullargspec()
-        if argspec is None:
-            return False
-
-        matched = set()
-
-        matched_via_default = 0
-        if argspec.kwonlydefaults:
-            matched.update(set(argspec.kwonlydefaults.keys()))
-            matched_via_default = len(matched.difference(set(kwargs.keys())))
-
-        if (
-            len(argspec.args) + len(argspec.kwonlyargs)
-            != len(args) + len(kwargs) + matched_via_default
-        ):
-            return False
-
-        for name, val in zip(argspec.args, args):
-            if want_type := argspec.annotations.get(name):
-                if not isinstance(val, want_type):
-                    return False
-
-            matched.add(name)
-
-        legal_names = set(argspec.args + argspec.kwonlyargs)
-        for name, val in kwargs.items():
-            if name not in legal_names:
-                return False
-
-            if want_type := argspec.annotations.get(name):
-                if not isinstance(val, want_type):
-                    return False
-
-            matched.add(name)
-
-        if len(matched) != len(argspec.args) + len(argspec.kwonlyargs):
-            return False
-
-        return True
+        return self._fullargspec.annotations
 
 
 class _Template:
@@ -221,7 +243,7 @@ class _Template:
             template_func.add(func)
             return template_func
 
-        typed_template_func = TemplateFunction(func.__name__)
+        typed_template_func = TemplateFunction.new(func.__name__)
         typed_template_func.add(func)
         return typed_template_func
 
@@ -237,11 +259,34 @@ class _Template:
                 template_func[types] = func
                 return template_func
 
-            typed_template_func = TemplateFunction(func.__name__)
+            typed_template_func = TemplateFunction.new(func.__name__)
             typed_template_func[types] = func
             return typed_template_func
 
         return _trampoline
 
 
-Decorator = _Template()
+def decorate__getattribute__(orig__getattribute__, templated_attributes):
+    @functools.wraps(orig__getattribute__)
+    def __getattribute__(self, attribute):
+        if attr := templated_attributes.get(attribute):
+            return attr.with_instance(self)
+        return orig__getattribute__(self, attribute)
+
+    return __getattribute__
+
+
+def TemplatedClass(cls):
+    templated_attributes = {}
+    for name, attr in cls.__dict__.items():
+        if isinstance(attr, TemplateFunction):
+            templated_attributes[name] = attr
+
+    cls.__getattribute__ = decorate__getattribute__(
+        cls.__getattribute__, templated_attributes=templated_attributes
+    )
+
+    return cls
+
+
+Template = _Template()
